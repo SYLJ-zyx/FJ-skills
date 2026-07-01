@@ -1,4 +1,4 @@
 ﻿interface:
-  display_name: "jimeng3.6.30"
+  display_name: "jimeng3.7.1"
   short_description: "根据剧本和当前场景图片自动生成即梦分镜提示词。"
   default_prompt: "上传场景图和剧本后，请按画幅与风格生成图片提示词和视频分镜提示词。"

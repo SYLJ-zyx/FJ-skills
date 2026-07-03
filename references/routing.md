@@ -14,7 +14,7 @@
 ## 视觉风格
 
 - `live-action`：真人、仿真人、实拍、真人剧、真人电视剧、电影级真人质感。
-- `3d-animation`：3D、三维、CG、游戏电影感、三维动画电影质感。
+- `3d-animation`：3D、3D国漫、国漫建模、古风国漫、精细建模、三维、CG、游戏电影感、三维动画电影质感。
 - `2d-anime`：2D、二维、日漫、日式动画、赛璐璐、漫画动态分镜。
 - `auto`：根据用户词汇和图片类型自动判断。若用户提供真人照片并说短剧，默认 `live-action`；若用户只说竖版短剧、短剧、真人短剧格式或提供现实题材剧本但未指定动画风格，也默认 `live-action`。
 
@@ -23,7 +23,7 @@
 | 路线 | 应读取的主要规则 |
 | --- | --- |
 | `vertical-short + live-action` | `vertical-9x16-live-action.md`、`format-routes.md`、`camera-rules.md`、`visual-styles.md`、`output-format.md` |
-| `vertical-short + 3d-animation` | `format-routes.md`、`camera-rules.md`、`visual-styles.md`、`output-format.md`；套用竖版短剧镜头与3D动画表演规则 |
+| `vertical-short + 3d-animation` | `format-routes.md`、`camera-rules.md`、`visual-styles.md`、`output-format.md`；套用竖版短剧镜头与3D动画表演规则；用户要求3D国漫/古风国漫/精细建模时执行 `visual-styles.md` 的“3D国漫精细建模短剧” |
 | `vertical-short + 2d-anime` | `format-routes.md`、`camera-rules.md`、`visual-styles.md`、`output-format.md`；套用竖版短剧镜头与日漫竖向分镜规则 |
 | `horizontal-short + live-action` | `format-routes.md`、`camera-rules.md`、`visual-styles.md`、`output-format.md`；横版短剧镜头但仍保持爆点节奏 |
 | `horizontal-short + 3d-animation` | `format-routes.md`、`camera-rules.md`、`visual-styles.md`、`output-format.md`；横版短剧节奏加3D动画镜头 |

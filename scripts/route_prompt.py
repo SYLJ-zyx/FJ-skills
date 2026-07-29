@@ -21,8 +21,19 @@ FORMAT_KEYWORDS = {
         "shorts",
         "tiktok",
     ],
-    "horizontal-short": ["横版短剧", "横屏短剧", "16:9短剧", "b站横版短剧", "横版剧", "横屏剧"],
-    "horizontal-film": ["横版电影", "电影分镜", "电影感", "预告片", "长片", "影视片段", "宽屏电影"],
+    "horizontal-short": [
+        "横版短剧",
+        "横屏短剧",
+        "16:9短剧",
+        "b站横版短剧",
+        "横版剧",
+        "横屏剧",
+        "横版",
+        "横屏",
+        "16:9",
+        "b站横版",
+    ],
+    "horizontal-film": ["横版电影", "电影分镜", "预告片", "长片", "影视片段", "宽屏电影"],
 }
 
 STYLE_KEYWORDS = {
@@ -36,15 +47,61 @@ STYLE_KEYWORDS = {
         "虚幻",
         "游戏电影",
         "动画电影",
+        "国漫",
         "3D国漫",
-        "国漫建模",
-        "古风国漫",
-        "精细建模",
-        "角色建模精细",
-        "3D国风",
+        "三维国风",
+        "3D短剧",
+        "3D竖版短剧",
+        "c4d",
+        "C4D",
+        "oc渲染",
+        "OC渲染",
+        "ue5",
+        "UE5",
+        "影视光影",
     ],
     "2d-anime": ["2d", "2D", "二维", "日漫", "日式", "番剧", "赛璐璐", "动漫", "漫画"],
 }
+
+GUOMAN_3D_KEYWORDS = [
+    "国漫",
+    "3D国漫",
+    "三维国风",
+    "3D竖版短剧",
+    "c4d",
+    "C4D",
+    "oc渲染",
+    "OC渲染",
+    "ue5",
+    "UE5",
+    "影视光影",
+]
+
+EXPLICIT_FILM_ROUTE_KEYWORDS = FORMAT_KEYWORDS["horizontal-film"]
+EXPLICIT_HORIZONTAL_SHORT_KEYWORDS = [
+    "横版短剧",
+    "横屏短剧",
+    "16:9短剧",
+    "b站横版短剧",
+    "横版剧",
+    "横屏剧",
+]
+HORIZONTAL_ASPECT_KEYWORDS = ["横版", "横屏", "16:9", "b站横版"]
+VERTICAL_ROUTE_KEYWORDS = FORMAT_KEYWORDS["vertical-short"]
+EXPLICIT_2D_STYLE_KEYWORDS = ["2d", "二维", "日漫", "日式", "番剧", "赛璐璐", "漫画"]
+EXPLICIT_3D_STYLE_KEYWORDS = [
+    "3d",
+    "三维",
+    "cg",
+    "虚幻",
+    "游戏电影",
+    "动画电影",
+    "国漫",
+    "c4d",
+    "oc渲染",
+    "ue5",
+    "影视光影",
+]
 
 
 def read_text(args: argparse.Namespace) -> str:
@@ -77,6 +134,41 @@ def choose(value: str, text: str, table: dict[str, list[str]], default: str) -> 
     return winner, scores
 
 
+def choose_format_route(value: str, text: str) -> tuple[str, dict[str, int]]:
+    scores = score_route(text, FORMAT_KEYWORDS)
+    if value != "auto":
+        return value, scores
+
+    # Explicit film-route words win over generic 16:9 or horizontal aspect hints.
+    # "电影感/电影级质感" is intentionally not here: it describes texture, not route.
+    if has_keyword(text, EXPLICIT_FILM_ROUTE_KEYWORDS):
+        return "horizontal-film", scores
+    if has_keyword(text, EXPLICIT_HORIZONTAL_SHORT_KEYWORDS) or has_keyword(text, HORIZONTAL_ASPECT_KEYWORDS):
+        return "horizontal-short", scores
+    if has_keyword(text, VERTICAL_ROUTE_KEYWORDS):
+        return "vertical-short", scores
+    if "短剧" in text:
+        return "vertical-short", scores
+    return "vertical-short", scores
+
+
+def choose_style_route(value: str, text: str) -> tuple[str, dict[str, int]]:
+    scores = score_route(text, STYLE_KEYWORDS)
+    if value != "auto":
+        return value, scores
+
+    # Explicit 2D wording wins over generic "国漫"; plain "国漫" remains 3D by default.
+    if has_keyword(text, EXPLICIT_2D_STYLE_KEYWORDS):
+        return "2d-anime", scores
+    if has_keyword(text, EXPLICIT_3D_STYLE_KEYWORDS):
+        return "3d-animation", scores
+    if has_keyword(text, STYLE_KEYWORDS["live-action"]):
+        return "live-action", scores
+    if "动漫" in text:
+        return "2d-anime", scores
+    return "live-action", scores
+
+
 def infer_format_from_aspect(aspect: str, text: str) -> str:
     if aspect == "9:16":
         return "vertical-short"
@@ -88,7 +180,12 @@ def infer_format_from_aspect(aspect: str, text: str) -> str:
     return "auto"
 
 
-def references_for(format_route: str, style: str) -> list[str]:
+def has_keyword(text: str, keywords: list[str]) -> bool:
+    lower = text.lower()
+    return any(keyword.lower() in lower for keyword in keywords)
+
+
+def references_for(format_route: str, style: str, text: str = "") -> list[str]:
     refs = [
         "references/routing.md",
         "references/output-format.md",
@@ -98,6 +195,8 @@ def references_for(format_route: str, style: str) -> list[str]:
     ]
     if format_route == "vertical-short" and style == "live-action":
         refs.insert(1, "references/vertical-9x16-live-action.md")
+    if format_route == "vertical-short" and style == "3d-animation" and has_keyword(text, GUOMAN_3D_KEYWORDS):
+        refs.insert(1, "references/vertical-9x16-3d-guoman.md")
     return refs
 
 
@@ -115,23 +214,26 @@ def main() -> int:
     format_hint = args.format
     if format_hint == "auto" and args.aspect != "auto":
         format_hint = infer_format_from_aspect(args.aspect, text)
-    format_route, format_scores = choose(format_hint, text, FORMAT_KEYWORDS, "vertical-short")
-    style, style_scores = choose(args.style, text, STYLE_KEYWORDS, "live-action")
+    format_route, format_scores = choose_format_route(format_hint, text)
+    style, style_scores = choose_style_route(args.style, text)
 
     print(f"选定路线: {format_route} + {style}")
     print(f"场景图片数量: {args.scene_images}")
     print(f"成片路线得分: {format_scores}")
     print(f"视觉风格得分: {style_scores}")
     print("建议读取这些参考文件:")
-    for ref in references_for(format_route, style):
+    for ref in references_for(format_route, style, text):
         print(f"- {ref}")
     print("检查清单:")
     print("- 只使用剧本和当前剧本场景图片确定后续生成逻辑。")
     print("- 保留剧本事实；场景图片用于场景、站位、光源、道具、镜头调度和连续性。")
-    print("- 先输出 prompt，再输出 video_prompt，并放入固定外壳。")
+    print("- 按固定外壳输出：每组先写场景提示，再写逐镜视频提示词，不输出 prompt/video_prompt 标签。")
     print("- 人物统一标记为 @角色名；视频提示词不重复图片锁定的外貌。")
     print("- 抽象情绪必须转译为可见微表情和微动作。")
-    print("- 爆点台词、揭露、反转、威胁和告白后必须安排反应镜头。")
+    print("- 先识别信息、情绪、关系、距离或动作结果变化，再决定是否使用特殊镜头；普通对白保持自然覆盖。")
+    print("- 在内部区分距离、大小、空间、方向、视角、信息、节奏冲击与静态张力，并按1至4级控制强度。")
+    print("- 明显冲击或爆点镜头必须检查轴线、动作因果、空间连续、透视形变和AI稳定性，必要时使用稳妥替代。")
+    print("- 爆点台词、揭露、反转、威胁和告白后只安排有新信息的反应或动作结果，不补无意义反应镜头。")
     return 0
 
 

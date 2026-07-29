@@ -1,4 +1,4 @@
-﻿interface:
-  display_name: "jimeng3.7.1"
-  short_description: "根据剧本和当前场景图片自动生成即梦分镜提示词。"
-  default_prompt: "上传场景图和剧本后，请按画幅与风格生成图片提示词和视频分镜提示词。"
+interface:
+  display_name: "即梦分镜7.28"
+  short_description: "锁定画幅、视觉与连续性的AI视频分镜"
+  default_prompt: "Use $jimeng-storyboard-7-28 to turn this script and scene image into an AI-video storyboard."
